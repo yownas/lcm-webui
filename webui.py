@@ -76,6 +76,8 @@ def generate(prompt, steps, cfg, size, image_count):
     pwidth = int(width * grid_xsize / grid_max)
     pheight = int(height * grid_ysize / grid_max)
     preview_grid = Image.new("RGB", (pwidth, pheight))
+    preview_grid.save(preview_name, optimize=True, quality=35)
+    yield {image: gr.update(value=preview_name), gallery: gr.update(value=None)}
 
     for i in range(image_count):
         filename = generate_temp_filename(index=i+1)
@@ -108,7 +110,7 @@ def generate(prompt, steps, cfg, size, image_count):
         result.insert(0, preview_name)
 
     yield {
-        image: gr.update(value=filename),
+        image: gr.update(value=preview_name if image_count > 1 else filename),
         gallery: gr.update(value=result),
     }
 
@@ -130,13 +132,9 @@ function generate_shortcut(){
 }
 """
 
-css = """
-"""
-
 gradio_root = gr.Blocks(
     title="LCM webui",
     theme=None,
-    css=css,
     analytics_enabled=False,
 ).queue()
 
@@ -144,7 +142,7 @@ with gradio_root as block:
     block.load(_js=scripts)
     with gr.Row():
         image = gr.Image(
-            height=680,
+            shape=(200, 800),
             type="filepath",
             visible=True,
             show_label=False,
