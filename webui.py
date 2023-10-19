@@ -78,7 +78,7 @@ def generate(prompt, steps, cfg, size, image_count):
     pheight = int(height * grid_ysize / grid_max)
     preview_grid = Image.new("RGB", (pwidth, pheight))
     preview_grid.save(preview_name, optimize=True, quality=35)
-    yield {image: gr.update(value=preview_name, shape=[width, height]), gallery: gr.update(value=None)}
+    yield {image: gr.update(value=preview_name, min_width=width, height=height), gallery: gr.update(value=None)}
 
     for i in range(image_count):
         filename = generate_temp_filename(index=i+1)
@@ -144,6 +144,8 @@ with gradio_root as block:
     with gr.Row():
         gr.HTML()
         image = gr.Image(
+            min_width=512,
+            height=512,
             type="filepath",
             visible=True,
             show_label=False,
