@@ -11,11 +11,12 @@ from PIL.PngImagePlugin import PngInfo
 
 def parse_args():
     parser = argparse.ArgumentParser()
+    parser.add_argument("--lowvram", action="store_true", help="Try to use less VRAM.")
+    parser.add_argument("--naughty", action="store_true", help="...or nice.")
     parser.add_argument("--port", type=int, default=None, help="Set the listen port.")
     parser.add_argument(
         "--share", action="store_true", help="Set whether to share on Gradio."
     )
-    parser.add_argument("--naughty", action="store_true", help="...or nice.")
     parser.add_argument(
         "--listen",
         type=str,
@@ -48,8 +49,8 @@ pipe = DiffusionPipeline.from_pretrained(
 
 pipe.enable_xformers_memory_efficient_attention()
 pipe.to(torch_device="cuda", torch_dtype=torch.float32)
-# Slow, low vram
-#pipe.enable_sequential_cpu_offload()
+if args.lowvram:
+    pipe.enable_sequential_cpu_offload()
 if args.naughty:
     pipe.run_safety_checker = or_nice
 
