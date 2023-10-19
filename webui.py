@@ -1,10 +1,12 @@
 import datetime
+import math
 import os
 import gradio
 import argparse
 import gradio as gr
 from diffusers import DiffusionPipeline
 import torch
+from PIL import Image
 from PIL.PngImagePlugin import PngInfo
 
 def parse_args():
@@ -61,8 +63,20 @@ def generate_temp_filename(index=1, folder="./outputs/", extension="png"):
 
 def generate(prompt, steps, cfg, size, image_count):
     (width, height) = size.split('x')
+    width = int(width)
+    height = int(height)
     result = []
     filename = ""
+    preview_name = "./outputs/preview.jpg"
+
+    # Preview
+    grid_xsize = math.ceil(math.sqrt(image_count))
+    grid_ysize = math.ceil(image_count / grid_xsize)
+    grid_max = max(grid_xsize, grid_ysize)
+    pwidth = int(width * grid_xsize / grid_max)
+    pheight = int(height * grid_ysize / grid_max)
+    preview_grid = Image.new("RGB", (pwidth, pheight))
+
     for i in range(image_count):
         filename = generate_temp_filename(index=i+1)
         os.makedirs(os.path.dirname(filename), exist_ok=True)
@@ -72,15 +86,28 @@ def generate(prompt, steps, cfg, size, image_count):
             guidance_scale=float(cfg),
             lcm_origin_steps=50,
             output_type="pil",
-            width=int(width),
-            height=int(height)
+            width=width,
+            height=height
         ).images[0]
+
+        # Preview
+        grid_xpos = int((i % grid_xsize) * (pwidth / grid_xsize))
+        grid_ypos = int(math.floor(i / grid_xsize) * (pheight / grid_ysize))
+        preview = images.resize((int(width / grid_max), int(height / grid_max)))
+        preview_grid.paste(preview, (grid_xpos, grid_ypos))
+        preview_grid.save(preview_name, optimize=True, quality=35)
+
+        # Save
         metadata = PngInfo()
         metadata.add_text("parameters", f"prompt: {prompt}\n\nsteps: {steps}\ncfg: {cfg}\nwidth: {width} height: {height}")
         images.save(filename, pnginfo=metadata)
         result.append(filename)
+        yield {image: gr.update(value=preview_name)}
 
-    return {
+    if image_count > 1:
+        result.insert(0, preview_name)
+
+    yield {
         image: gr.update(value=filename),
         gallery: gr.update(value=result),
     }
