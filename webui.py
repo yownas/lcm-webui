@@ -148,7 +148,7 @@ with gradio_root as block:
             type="filepath",
             visible=True,
             show_label=False,
-            image_mode="RGBA"
+            image_mode="RGBA",
         )
     with gr.Row():
         gallery = gr.Gallery(
