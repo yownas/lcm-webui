@@ -142,11 +142,9 @@ with gradio_root as block:
     block.load(_js=scripts)
     with gr.Row():
         image = gr.Image(
-            shape=(200, 800),
             type="filepath",
             visible=True,
             show_label=False,
-            image_mode="RGBA",
         )
     with gr.Row():
         gallery = gr.Gallery(
