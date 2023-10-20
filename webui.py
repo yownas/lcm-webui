@@ -1,4 +1,5 @@
 import datetime
+import time
 import math
 import os
 import gradio
@@ -8,6 +9,7 @@ from diffusers import DiffusionPipeline
 import torch
 from PIL import Image
 from PIL.PngImagePlugin import PngInfo
+import threading
 
 def parse_args():
     parser = argparse.ArgumentParser()
@@ -62,13 +64,46 @@ def generate_temp_filename(index=1, folder="./outputs/", extension="png"):
     result = os.path.join(folder, date_string, filename)
     return os.path.abspath(os.path.realpath(result))
 
+queue = []
+results = []
+
+def generate_worker():
+    global queue, results
+    while len(queue) > 0:
+        request = queue.pop(0)
+        images = pipe(
+            prompt=request["prompt"],
+            num_inference_steps=request["steps"],
+            guidance_scale=request["cfg"],
+            lcm_origin_steps=50,
+            output_type="pil",
+            width=request["width"],
+            height=request["height"],
+        ).images[0]
+        results.append(images)
+    results.append(None)
+
 def generate(prompt, steps, cfg, size, image_count):
+    global queue, results
     (width, height) = size.split('x')
     width = int(width)
     height = int(height)
     result = []
     filename = ""
     preview_name = "./outputs/preview.jpg"
+
+    # Create queue
+    for i in range(image_count):
+        queue.append({
+            "prompt": prompt,
+            "steps": int(steps),
+            "cfg": float(cfg),
+            "width": width,
+            "height": height,
+        })
+
+    # Start worker
+    threading.Thread(target=generate_worker, daemon=True).start()
 
     # Preview
     grid_xsize = math.ceil(math.sqrt(image_count))
@@ -80,19 +115,16 @@ def generate(prompt, steps, cfg, size, image_count):
     preview_grid.save(preview_name, optimize=True, quality=35)
     yield {image: gr.update(value=preview_name, min_width=width, height=height), gallery: gr.update(value=None)}
 
-    for i in range(image_count):
-        filename = generate_temp_filename(index=i+1)
-        os.makedirs(os.path.dirname(filename), exist_ok=True)
-        images = pipe(
-            prompt=prompt,
-            num_inference_steps=int(steps),
-            guidance_scale=float(cfg),
-            lcm_origin_steps=50,
-            output_type="pil",
-            width=width,
-            height=height
-        ).images[0]
-
+    i = 0
+    generating = True
+    while generating:
+        # Wait for data
+        while len(results) == 0:
+            time.sleep(0.1)
+        images = results.pop(0)
+        if images is None:
+            generating = False
+            continue
         # Preview
         grid_xpos = int((i % grid_xsize) * (pwidth / grid_xsize))
         grid_ypos = int(math.floor(i / grid_xsize) * (pheight / grid_ysize))
@@ -101,10 +133,13 @@ def generate(prompt, steps, cfg, size, image_count):
         preview_grid.save(preview_name, optimize=True, quality=35)
 
         # Save
+        filename = generate_temp_filename(index=i+1)
+        os.makedirs(os.path.dirname(filename), exist_ok=True)
         metadata = PngInfo()
         metadata.add_text("parameters", f"prompt: {prompt}\n\nsteps: {steps}\ncfg: {cfg}\nwidth: {width} height: {height}")
         images.save(filename, pnginfo=metadata)
         result.append(filename)
+        i+=1
         yield {image: gr.update(value=preview_name)}
 
     if image_count > 1:
