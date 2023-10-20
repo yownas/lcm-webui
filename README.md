@@ -11,11 +11,15 @@ Create a venv and install requirements.
 
 `python -m venv venv`
 
-`source venv/bin/activate` or `source venv\Scripts\activate.bat`
+`source venv/bin/activate` (Linux) or `source venv\Scripts\activate.bat` (Windows)
 
 `pip install -r requirements.txt`
 
 # Launch
+
+Activate venv if you haven't done it.
+
+`source venv/bin/activate` (Linux) or `source venv\Scripts\activate.bat` (Windows)
 
 `python webui.py`
 
