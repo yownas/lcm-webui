@@ -13,7 +13,7 @@ Example on a GTX1080ti:
 
 Create a venv and install requirements.
 
-Install python from here (https://www.python.org/downloads/) (Tested with version 3.10). Download this repo with git (recommended) or as a zip file. Open a cmd (Windows) or bash (Linux) prompt and go to the folder containing the webui and create a virtual env for python.
+Install python from here (https://www.python.org/downloads/) (Tested with version 3.10). Download this repo with git (recommended) or as a zip file (links in the green "Code" button at the top of the page). Open a cmd (Windows) or bash (Linux) prompt and go to the folder containing the webui and create a virtual env for python.
 
 `python -m venv venv`
 
