@@ -13,8 +13,11 @@ import threading
 
 def parse_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--lowvram", action="store_true", help="Try to use less VRAM.")
-    parser.add_argument("--naughty", action="store_true", help="...or nice.")
+    parser.add_argument("--device", default="cuda", help="Device: cuda, cpu or mps (MacOS).")
+    parser.add_argument("--dtype", default="32", help="Use 16 or 32(default) bit float.")
+    parser.add_argument("--offload", action="store_true", help="Offload to CPU to use less VRAM.")
+    parser.add_argument("--xformers", action="store_true", help="Use xformers.")
+    parser.add_argument("--naughty", action="store_true", help=argparse.SUPPRESS)
     parser.add_argument("--port", type=int, default=None, help="Set the listen port.")
     parser.add_argument(
         "--share", action="store_true", help="Set whether to share on Gradio."
@@ -49,9 +52,17 @@ pipe = DiffusionPipeline.from_pretrained(
     custom_revision="main"
 )
 
-pipe.enable_xformers_memory_efficient_attention()
-pipe.to(torch_device="cuda", torch_dtype=torch.float32)
-if args.lowvram:
+if args.xformers:
+    pipe.enable_xformers_memory_efficient_attention()
+
+match args.dtype:
+    case "16":
+        dtype = torch.float16
+    case _:
+        dtype = torch.float32
+pipe.to(torch_device=args.device, torch_dtype=torch.float32)
+
+if args.offload:
     pipe.enable_sequential_cpu_offload()
 if args.naughty:
     pipe.run_safety_checker = or_nice

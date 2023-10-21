@@ -13,9 +13,17 @@ Example on a GTX1080ti:
 
 Create a venv and install requirements.
 
+Install python from here (https://www.python.org/downloads/) (Tested with version 3.10). Download this repo with git (recommended) or as a zip file. Open a cmd (Windows) or bash (Linux) prompt and go to the folder containing the webui and create a virtual env for python.
+
 `python -m venv venv`
 
+Activate it.
+
 `source venv/bin/activate` (Linux) or `source venv\Scripts\activate.bat` (Windows)
+
+Install pytorch from (https://pytorch.org). Select Stable, your OS, Pip, Python and compute platform that match your computer.
+
+Install the rest of the requirements.
 
 `pip install -r requirements.txt`
 
@@ -26,5 +34,7 @@ Activate venv if you haven't done it.
 `source venv/bin/activate` (Linux) or `source venv\Scripts\activate.bat` (Windows)
 
 `python webui.py`
+
+Go to (http://localhost:7860)
 
 Models will be downloaded automatically into your local hugginface cache folder.
