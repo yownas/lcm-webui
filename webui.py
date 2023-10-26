@@ -10,6 +10,7 @@ import torch
 from PIL import Image
 from PIL.PngImagePlugin import PngInfo
 import threading
+import random
 
 def parse_args():
     parser = argparse.ArgumentParser()
@@ -82,6 +83,12 @@ def generate_worker():
     global queue, results
     while len(queue) > 0:
         request = queue.pop(0)
+
+        seed = int(request["seed"])
+        if seed == -1:
+            seed = random.randint(0, 2**32)
+        torch.manual_seed(seed)
+
         images = pipe(
             prompt=request["prompt"],
             num_inference_steps=request["steps"],
@@ -94,7 +101,7 @@ def generate_worker():
         results.append(images)
     results.append(None)
 
-def generate(prompt, steps, cfg, size, image_count):
+def generate(prompt, steps, cfg, size, seed, image_count):
     global queue, results
     (width, height) = size.split('x')
     width = int(width)
@@ -111,7 +118,9 @@ def generate(prompt, steps, cfg, size, image_count):
             "cfg": float(cfg),
             "width": width,
             "height": height,
+            "seed": seed,
         })
+        seed += 1
 
     # Start worker
     threading.Thread(target=generate_worker, daemon=True).start()
@@ -243,6 +252,11 @@ with gradio_root as block:
             choices=["512x512", "768x512", "512x768", "768x768", "1024x768", "768x1024"],
             value="512x512",
         )
+        seed = gr.Number(
+            label="Seed (-1 is random)",
+            precision=0,
+            value=-1,
+        )
         image_count = gr.Slider(
             label="Image number",
             minimum=1,
@@ -259,7 +273,7 @@ with gradio_root as block:
 
     submit.click(
         fn=generate,
-        inputs=[prompt, steps, cfg, size, image_count],
+        inputs=[prompt, steps, cfg, size, seed, image_count],
         outputs=[image, gallery],
     )
 
