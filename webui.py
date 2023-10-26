@@ -18,7 +18,7 @@ def parse_args():
     parser.add_argument("--dtype", default="32", help="Use 16 or 32(default) bit float.")
     parser.add_argument("--offload", action="store_true", help="Offload to CPU to use less VRAM.")
     parser.add_argument("--xformers", action="store_true", help="Use xformers.")
-    parser.add_argument("--naughty", action="store_true", help=argparse.SUPPRESS)
+    parser.add_argument("--naughty", action="store_true", help="Naughty or nice.")
     parser.add_argument("--port", type=int, default=None, help="Set the listen port.")
     parser.add_argument(
         "--share", action="store_true", help="Set whether to share on Gradio."
