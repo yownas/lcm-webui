@@ -110,6 +110,8 @@ def generate(prompt, steps, cfg, size, seed, image_count):
     filename = ""
     preview_name = "./outputs/preview.jpg"
 
+    start_time = time.time()
+
     # Create queue
     for i in range(image_count):
         queue.append({
@@ -164,6 +166,10 @@ def generate(prompt, steps, cfg, size, seed, image_count):
 
     if image_count > 1:
         result.insert(0, preview_name)
+
+    end_time = time.time()
+    elapsed_time = end_time - start_time
+    print(f"\033[91mTime taken: {elapsed_time:0.2f} seconds\033[0m")
 
     yield {
         image: gr.update(value=preview_name if image_count > 1 else filename),
