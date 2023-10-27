@@ -122,7 +122,8 @@ def generate(prompt, steps, cfg, size, seed, image_count):
             "height": height,
             "seed": seed,
         })
-        seed += 1
+        if not seed == -1:
+            seed += 1
 
     # Start worker
     threading.Thread(target=generate_worker, daemon=True).start()
