@@ -2,4 +2,4 @@ diffusers
 transformers
 accelerate
 xformers
-gradio
+gradio==3.50.2
