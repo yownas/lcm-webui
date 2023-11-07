@@ -5,7 +5,7 @@ import os
 import gradio
 import argparse
 import gradio as gr
-from diffusers import DiffusionPipeline
+from diffusers import DiffusionPipeline, AutoencoderTiny
 import torch
 from PIL import Image
 from PIL.PngImagePlugin import PngInfo
@@ -49,8 +49,6 @@ def or_nice(image, device, dtype):
 
 pipe = DiffusionPipeline.from_pretrained(
     "SimianLuo/LCM_Dreamshaper_v7",
-    custom_pipeline="latent_consistency_txt2img",
-    custom_revision="main"
 )
 
 if args.xformers:
@@ -61,8 +59,10 @@ match args.dtype:
         dtype = torch.float16
     case _:
         dtype = torch.float32
-pipe.to(torch_device=args.device, torch_dtype=torch.float32)
-
+pipe.vae = AutoencoderTiny.from_pretrained(
+    "madebyollin/taesd", torch_dtype=dtype, use_safetensors=True
+)
+pipe.to(device=args.device, dtype=dtype).to(args.device)
 if args.offload:
     pipe.enable_sequential_cpu_offload()
 if args.naughty:
