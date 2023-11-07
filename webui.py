@@ -36,7 +36,7 @@ def parse_args():
 args = parse_args()
 
 def launch(args, gradio_root):
-    gradio_root.queue(concurrency_count=4)
+    gradio_root.queue()
     gradio_root.launch(
         inbrowser=False,
         server_name=args.listen,
@@ -202,7 +202,7 @@ gradio_root = gr.Blocks(
 ).queue()
 
 with gradio_root as block:
-    block.load(_js=scripts)
+    block.load(js=scripts)
     with gr.Row():
         gr.HTML()
         image = gr.Image(
@@ -233,7 +233,6 @@ with gradio_root as block:
             scale=9,
         )
         submit = gr.Button(
-            label="Generate",
             value="Generate",
             elem_id="generate",
             scale=1,
@@ -272,11 +271,10 @@ with gradio_root as block:
             value=1,
         )
 
-    @gallery.select(
-        inputs=[gallery], outputs=[image], show_progress="hidden"
-    )
-    def gallery_change(files, sd: gr.SelectData):
-        return files[sd.index]["name"]
+    def gallery_change(evt: gr.SelectData):
+        return evt.value["image"]["path"]
+
+    gallery.select(gallery_change, None, image)
 
     submit.click(
         fn=generate,
